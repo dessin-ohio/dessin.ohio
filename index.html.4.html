@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Dessin entre amis</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,sans-serif;background:linear-gradient(160deg,#ffeaa7,#fab1a0 40%,#a29bfe);min-height:100vh;color:#2d3436}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:linear-gradient(90deg,#6c5ce7,#fd79a8,#fdcb6e);color:#fff;font-size:18px;text-shadow:0 1px 3px #0004;position:sticky;top:0;z-index:5}
+main{padding:12px;max-width:640px;margin:auto}
+button{padding:11px 16px;border:0;border-radius:999px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff;font-size:15px;font-weight:600;box-shadow:0 3px 8px #0003}
+button:active{transform:scale(.96)}
+button.alt{background:#fff;color:#2d3436}
+input{width:100%;padding:11px;margin:6px 0;border:2px solid #dfe6e9;border-radius:14px;font-size:16px}
+.card{background:#fffffff2;border-radius:20px;padding:14px;margin:14px 0;box-shadow:0 6px 18px #0002}
+.card img{width:100%;border-radius:14px;border:3px solid #fff;box-shadow:0 2px 8px #0002;margin-top:8px}
+.card b{color:#6c5ce7}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.vers img{width:80px;height:80px;object-fit:cover}
+#wrap{overflow:auto;height:55vh;background:#fff;border-radius:20px;border:4px solid #fff;box-shadow:0 6px 18px #0003;-webkit-overflow-scrolling:touch}
+canvas{display:block;width:1600px;height:1600px;background:#fff;touch-action:none}
+#pal{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+#pal i{width:34px;height:34px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px #0003}
+#pal i.on{transform:scale(1.25);border-color:#2d3436}
+.mix{background:#fffffff2;border-radius:16px;padding:8px 12px;margin:8px 0}
+.mix label{display:block;font-size:13px;font-weight:600}
+.mix input{-webkit-appearance:none;appearance:none;width:100%;height:16px;border-radius:8px;padding:0;margin:4px 0 8px;border:2px solid #fff;box-shadow:0 1px 4px #0003}
+.mix input::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;border:4px solid #2d3436}
+#dot{width:38px;height:38px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px #0003;flex:none;background:#000}
+.side{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
+.side figure{margin:0;flex:none;width:72%}
+.side figcaption{font-size:13px;font-weight:600;text-align:center;margin-top:4px}
+#panel{background:#fffffff2;border-radius:18px;padding:10px;margin:10px 0;box-shadow:0 4px 12px #0002}
+#panel .mix{padding:0;margin:0;background:none}
+#bar{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:10px 0}
+button.tool{padding:6px 0;height:60px;border-radius:16px;background:#fff;color:#2d3436;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:22px;line-height:1}
+button.tool small{font-size:10px;font-weight:600}
+button.tool.on{background:linear-gradient(135deg,#6c5ce7,#a29bfe);color:#fff}
+button.tool #dot{width:26px;height:26px}
+.sizebox{display:flex;align-items:center;gap:10px;background:#fffffff2;border-radius:18px;padding:8px 14px}
+.sizebox input{margin:0;flex:1}
+.pv{width:48px;height:48px;display:flex;align-items:center;justify-content:center;flex:none}
+#prev{display:block;border-radius:50%;border:2px solid #2d3436;background:#000}
+.actions{display:flex;gap:8px;margin:10px 0}
+.actions button{flex:1;padding:14px 8px}
+.actions button#save{flex:2}
+.hide{display:none}
+</style>
+</head>
+<body>
+<header><b>🎨 Dessin.ohio✨</b><button id="out" class="alt hide">Déconnexion</button></header>
+<main>
+
+<!-- Connexion -->
+<section id="auth" class="card">
+  <h3>Connexion</h3>
+  <input id="name" placeholder="Prénom (pour l’inscription)">
+  <input id="email" type="email" placeholder="E-mail">
+  <input id="pass" type="password" placeholder="Mot de passe (6 caractères min.)">
+  <input id="code" placeholder="Code d’invitation (inscription)">
+  <div class="row"><button id="login">Connexion</button><button id="signup" class="alt">Créer un compte</button></div>
+  <p id="err" style="color:#d63031"></p>
+</section>
+
+<!-- Galerie -->
+<section id="gallery" class="hide">
+  <button id="new">➕ Nouveau dessin</button>
+  <div id="reqs"></div>
+  <div id="list"></div>
+</section>
+
+<!-- Dessin -->
+<section id="draw" class="hide">
+  <p id="title"></p>
+  <div id="wrap"><canvas id="cv" width="1600" height="1600"></canvas></div>
+  <div id="panel" class="hide">
+    <div id="pal"></div>
+    <div class="mix">
+      <label>Teinte<input id="rh" type="range" min="0" max="360" value="0"></label>
+      <label>Saturation<input id="rs" type="range" min="0" max="100" value="0"></label>
+      <label>Luminosité<input id="rl" type="range" min="0" max="100" value="0"></label>
+    </div>
+  </div>
+  <input id="color" type="hidden" value="#000000">
+  <div id="bar">
+    <button id="tcolor" class="tool"><i id="dot"></i><small>Couleur</small></button>
+    <button id="tpen" class="tool on"><span>✏️</span><small>Crayon</small></button>
+    <button id="ters" class="tool"><span>🧽</span><small>Gomme</small></button>
+    <button id="move" class="tool"><span>✋</span><small>Déplacer</small></button>
+    <button id="zout" class="tool"><span>➖</span><small>Zoom</small></button>
+    <button id="zin" class="tool"><span>➕</span><small>Zoom</small></button>
+  </div>
+  <div class="sizebox"><b>Taille</b><input id="size" type="range" min="2" max="150" value="8"><div class="pv"><i id="prev"></i></div></div>
+  <div class="actions">
+    <button id="save">💾 Sauvegarder</button>
+    <button id="clear" class="alt">🧹 Effacer</button>
+    <button id="back" class="alt">← Retour</button>
+  </div>
+</section>
+
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ====== À MODIFIER ====== */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD4likcVq_YvEzOiAPTbRV6sQgktna8x0Q",
+  authDomain: "dessine-ohio.firebaseapp.com",
+  projectId: "dessine-ohio",
+  appId: "1:153288541564:web:78965a24d636a5e8ec50f9"
+};
+const CODE_INVITATION = "1312Acab";
+/* ======================== */
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth(), db = firebase.firestore();
+const $ = id => document.getElementById(id);
+const show = id => ["auth","gallery","draw"].forEach(s => $(s).classList.toggle("hide", s !== id));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let me = null, mode = null, unsubs = [];
+
+/* ---------- Comptes ---------- */
+$("signup").onclick = async () => {
+  $("err").textContent = "";
+  if ($("code").value.trim() !== CODE_INVITATION) return $("err").textContent = "Code d’invitation incorrect.";
+  if (!$("name").value.trim()) return $("err").textContent = "Indique ton prénom.";
+  try {
+    const c = await auth.createUserWithEmailAndPassword($("email").value, $("pass").value);
+    await c.user.updateProfile({ displayName: $("name").value.trim() });
+    me = auth.currentUser; loadGallery();
+  } catch (e) { $("err").textContent = e.message; }
+};
+$("login").onclick = async () => {
+  $("err").textContent = "";
+  try { await auth.signInWithEmailAndPassword($("email").value, $("pass").value); }
+  catch (e) { $("err").textContent = e.message; }
+};
+$("out").onclick = () => auth.signOut();
+auth.onAuthStateChanged(u => {
+  me = u; unsubs.forEach(f => f()); unsubs = [];
+  $("out").classList.toggle("hide", !u);
+  if (u) { show("gallery"); loadGallery(); } else show("auth");
+});
+
+/* ---------- Galerie ---------- */
+function loadGallery() {
+  show("gallery");
+  unsubs.forEach(f => f()); unsubs = [];
+  unsubs.push(db.collection("drawings").orderBy("createdAt", "desc").onSnapshot(snap => {
+    $("list").innerHTML = "";
+    snap.forEach(d => {
+      const x = d.data(), mine = x.owner === me.uid;
+      const div = document.createElement("div"); div.className = "card";
+      const vs = (x.versions || []).map(v => typeof v === "string" ? { image: v, by: "" } : v);
+      div.innerHTML = `<b>${esc(x.ownerName)}</b><div class="side"><figure><img src="${x.image}"><figcaption>Original</figcaption></figure>` +
+        vs.map(v => `<figure><img src="${v.image}"><figcaption>✨ Amélioré${v.by ? " par " + esc(v.by) : ""}</figcaption></figure>`).join("") + `</div>`;
+      if (mine) {
+        const e = document.createElement("button"); e.textContent = "✏️ Modifier mon dessin";
+        e.onclick = () => openDraw({ type: "edit", id: d.id, image: x.image });
+        const del = document.createElement("button"); del.textContent = "🗑️ Supprimer"; del.className = "alt";
+        del.onclick = () => { if (confirm("Supprimer ce dessin pour tout le monde ?")) d.ref.delete(); };
+        const r = document.createElement("div"); r.className = "row"; r.append(e, del);
+        div.appendChild(r);
+      } else {
+        const b = document.createElement("button"); b.textContent = "✏️ Proposer une amélioration";
+        b.onclick = () => openDraw({ type: "improve", id: d.id, ownerId: x.owner, image: x.image });
+        div.appendChild(b);
+      }
+      $("list").appendChild(div);
+    });
+  }));
+  unsubs.push(db.collection("requests").where("ownerId", "==", me.uid).where("status", "==", "pending").onSnapshot(snap => {
+    $("reqs").innerHTML = "";
+    snap.forEach(r => {
+      const x = r.data(), div = document.createElement("div"); div.className = "card";
+      div.innerHTML = `<b>${esc(x.fromName)}</b> te propose une amélioration<img src="${x.image}"><div class="row"></div>`;
+      const ok = document.createElement("button"); ok.textContent = "Accepter";
+      ok.onclick = async () => {
+        await db.collection("drawings").doc(x.drawingId).update({ versions: firebase.firestore.FieldValue.arrayUnion({ image: x.image, by: x.fromName }) });
+        await r.ref.update({ status: "accepted" });
+      };
+      const no = document.createElement("button"); no.textContent = "Refuser"; no.className = "alt";
+      no.onclick = () => r.ref.update({ status: "rejected" });
+      div.querySelector(".row").append(ok, no);
+      $("reqs").appendChild(div);
+    });
+  }));
+}
+$("new").onclick = () => openDraw({ type: "new" });
+
+/* ---------- Dessin ---------- */
+const cv = $("cv"), ctx = cv.getContext("2d");
+let drawing = false, erase = false, moveMode = false, penSize = 8, eraserSize = 40;
+function blank() { ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height); }
+function openDraw(m) {
+  mode = m; blank(); moveMode = false; cv.style.touchAction = "none"; $("move").classList.remove("on"); $("panel").classList.add("hide");
+  $("title").textContent = m.type === "new" ? "🖌️ Nouveau dessin" : m.type === "edit" ? "✏️ Modification de ton dessin" : "✨ Ton amélioration (l’original est conservé)";
+  if (m.image) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, cv.width, cv.height); im.src = m.image; }
+  show("draw");
+  const w = $("wrap"); setZoom(.5, 0, 0); w.scrollLeft = (cv.width * Z - w.clientWidth) / 2; w.scrollTop = (cv.height * Z - w.clientHeight) / 2;
+}
+let Z = .5;
+function setZoom(nz, cx, cy) {
+  const w = $("wrap"); nz = Math.max(.2, Math.min(3, nz));
+  const px = (w.scrollLeft + cx) / Z, py = (w.scrollTop + cy) / Z;
+  Z = nz; cv.style.width = cv.style.height = cv.width * Z + "px";
+  w.scrollLeft = px * Z - cx; w.scrollTop = py * Z - cy; updPrev();
+}
+$("zin").onclick = () => setZoom(Z * 1.3, $("wrap").clientWidth / 2, $("wrap").clientHeight / 2);
+$("zout").onclick = () => setZoom(Z / 1.3, $("wrap").clientWidth / 2, $("wrap").clientHeight / 2);
+let pd = 0;
+const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+$("wrap").addEventListener("touchstart", e => { if (e.touches.length === 2) pd = dist(e.touches); }, { passive: true });
+$("wrap").addEventListener("touchmove", e => {
+  if (!moveMode || e.touches.length !== 2 || !pd) return;
+  const d = dist(e.touches), r = $("wrap").getBoundingClientRect();
+  setZoom(Z * d / pd, (e.touches[0].clientX + e.touches[1].clientX) / 2 - r.left, (e.touches[0].clientY + e.touches[1].clientY) / 2 - r.top);
+  pd = d;
+}, { passive: true });
+$("wrap").addEventListener("touchend", () => pd = 0, { passive: true });
+function exportImg() {
+  let u = "";
+  for (const sc of [1, .75, .5]) {
+    const t = document.createElement("canvas"); t.width = cv.width * sc; t.height = cv.height * sc;
+    t.getContext("2d").drawImage(cv, 0, 0, t.width, t.height);
+    for (let q = .7; q >= .3; q -= .1) { u = t.toDataURL("image/jpeg", q); if (u.length <= 300000) return u; }
+  }
+  return u;
+}
+$("move").onclick = () => {
+  moveMode = !moveMode;
+  cv.style.touchAction = moveMode ? "pan-x pan-y" : "none";
+  $("move").classList.toggle("on", moveMode);
+};
+const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+cv.onpointerdown = e => {
+  if (moveMode) return;
+  drawing = true; cv.setPointerCapture(e.pointerId);
+  ctx.lineCap = ctx.lineJoin = "round"; ctx.lineWidth = $("size").value;
+  ctx.strokeStyle = erase ? "#fff" : $("color").value;
+  ctx.beginPath(); const [x, y] = pos(e); ctx.moveTo(x, y); ctx.lineTo(x + .01, y); ctx.stroke();
+};
+cv.onpointermove = e => { if (!drawing) return; const [x, y] = pos(e); ctx.lineTo(x, y); ctx.stroke(); };
+cv.onpointerup = cv.onpointercancel = () => drawing = false;
+function updPrev() {
+  const d = Math.max(4, Math.min(44, +$("size").value * Z));
+  $("prev").style.width = $("prev").style.height = d + "px";
+  $("prev").style.background = erase ? "#dfe6e9" : $("color").value;
+}
+function setTool(t) {
+  erase = t === "eraser";
+  $("tpen").classList.toggle("on", !erase); $("ters").classList.toggle("on", erase);
+  $("size").value = erase ? eraserSize : penSize; updPrev();
+}
+$("size").oninput = () => { if (erase) eraserSize = +$("size").value; else penSize = +$("size").value; updPrev(); };
+$("tpen").onclick = () => setTool("pen");
+$("ters").onclick = () => setTool("eraser");
+$("tcolor").onclick = () => $("panel").classList.toggle("hide");
+function applyColor() {
+  const H = +$("rh").value, S = +$("rs").value, L = +$("rl").value, c = `hsl(${H},${S}%,${L}%)`;
+  $("color").value = c; $("dot").style.background = c; setTool("pen");
+  $("rh").style.background = "linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)";
+  $("rs").style.background = `linear-gradient(90deg,hsl(${H},0%,${L}%),hsl(${H},100%,${L}%))`;
+  $("rl").style.background = `linear-gradient(90deg,#000,hsl(${H},${S}%,50%),#fff)`;
+}
+function setHex(hx) {
+  const r = parseInt(hx.slice(1,3),16)/255, g = parseInt(hx.slice(3,5),16)/255, b = parseInt(hx.slice(5,7),16)/255;
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), l = (mx+mn)/2, d = mx-mn;
+  let h = 0, sat = 0;
+  if (d) { sat = d / (1 - Math.abs(2*l - 1));
+    h = mx === r ? ((g-b)/d + (g<b?6:0)) : mx === g ? (b-r)/d + 2 : (r-g)/d + 4; h *= 60; }
+  $("rh").value = Math.round(h); $("rs").value = Math.round(sat*100); $("rl").value = Math.round(l*100);
+  applyColor();
+}
+["rh","rs","rl"].forEach(id => $(id).oninput = applyColor);
+["#000000","#e74c3c","#e67e22","#f1c40f","#2ecc71","#1abc9c","#3498db","#9b59b6","#fd79a8","#8d6e63","#ffffff"].forEach(c => {
+  const i = document.createElement("i"); i.style.background = c;
+  i.onclick = () => { setHex(c);
+    document.querySelectorAll("#pal i").forEach(n => n.classList.toggle("on", n === i)); };
+  $("pal").appendChild(i);
+});
+setHex("#000000");
+$("clear").onclick = blank;
+$("back").onclick = loadGallery;
+$("save").onclick = async () => {
+  const image = exportImg(), name = me.displayName || "Ami";
+  const t = firebase.firestore.FieldValue.serverTimestamp();
+  if (mode.type === "edit")
+    await db.collection("drawings").doc(mode.id).update({ image });
+  else if (mode.type === "new")
+    await db.collection("drawings").add({ owner: me.uid, ownerName: name, image, versions: [], createdAt: t });
+  else
+    await db.collection("requests").add({ drawingId: mode.id, ownerId: mode.ownerId, from: me.uid, fromName: name, image, status: "pending", createdAt: t });
+  loadGallery();
+};
+</script>
+</body>
+</html>
